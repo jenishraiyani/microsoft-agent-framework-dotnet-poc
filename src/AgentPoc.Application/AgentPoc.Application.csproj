@@ -4,7 +4,10 @@
     <ProjectReference Include="..\AgentPoc.Domain\AgentPoc.Domain.csproj" />
   </ItemGroup>
 
+  <!-- No provider SDK reference: agent and tool code only ever sees IChatClient. -->
   <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
