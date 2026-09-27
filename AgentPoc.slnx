@@ -2,5 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/AgentPoc.Application/AgentPoc.Application.csproj" />
     <Project Path="src/AgentPoc.Domain/AgentPoc.Domain.csproj" />
+    <Project Path="src/AgentPoc.Infrastructure/AgentPoc.Infrastructure.csproj" />
   </Folder>
 </Solution>
