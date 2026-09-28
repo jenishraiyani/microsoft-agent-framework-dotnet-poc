@@ -1,0 +1,59 @@
+{
+  "profiles": {
+    "Azure OpenAI": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AGENT__PROVIDER": "AzureOpenAI"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5049"
+    },
+    "Groq (free tier)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AGENT__PROVIDER": "OpenAI",
+        "AGENT__OPENAI__ENDPOINT": "https://api.groq.com/openai/v1",
+        "AGENT__OPENAI__MODELID": "openai/gpt-oss-120b"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5049"
+    },
+    "Ollama (local)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AGENT__PROVIDER": "OpenAI",
+        "AGENT__OPENAI__ENDPOINT": "http://localhost:11434/v1",
+        "AGENT__OPENAI__MODELID": "qwen3",
+        "AGENT__OPENAI__APIKEY": "ollama"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5049"
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:54290/",
+      "sslPort": 44353
+    }
+  }
+}
