@@ -5,4 +5,7 @@
     <Project Path="src/AgentPoc.Domain/AgentPoc.Domain.csproj" />
     <Project Path="src/AgentPoc.Infrastructure/AgentPoc.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AgentPoc.Tests/AgentPoc.Tests.csproj" />
+  </Folder>
 </Solution>
