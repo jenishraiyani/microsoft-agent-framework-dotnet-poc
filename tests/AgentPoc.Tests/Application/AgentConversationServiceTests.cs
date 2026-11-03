@@ -2,6 +2,7 @@ using AgentPoc.Application.Agents;
 using AgentPoc.Application.Exceptions;
 using AgentPoc.Application.Services;
 using AgentPoc.Infrastructure.Sessions;
+using AgentPoc.Tests.TestSupport;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -54,7 +55,12 @@ public sealed class AgentConversationServiceTests
             cache, options, NullLogger<MemoryCacheAgentSessionStore>.Instance);
 
         return (
-            new AgentConversationService(agent, store, options, NullLogger<AgentConversationService>.Instance),
+            new AgentConversationService(
+                agent,
+                store,
+                new TestCustomerContext(),
+                options,
+                NullLogger<AgentConversationService>.Instance),
             cache);
     }
 

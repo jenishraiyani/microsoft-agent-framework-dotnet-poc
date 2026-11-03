@@ -43,11 +43,19 @@ public sealed class TestAgentHost : IDisposable
     public TestOrderStack Stack { get; }
 
     /// <summary>Simulates one HTTP request: a new agent over the shared stores.</summary>
-    public IAgentConversationService BeginRequest() => new AgentConversationService(
-        _agentFactory.Create(Stack.Toolset.Tools),
-        _sessionStore,
-        Options.Create(_agentOptions),
-        NullLogger<AgentConversationService>.Instance);
+    public IAgentConversationService BeginRequest() => BeginRequestAs(Stack.CustomerContext);
+
+    /// <summary>The same, for a different signed-in customer over the same stores.</summary>
+    public IAgentConversationService BeginRequestAs(string customerId) =>
+        BeginRequestAs(new TestCustomerContext(customerId));
+
+    private IAgentConversationService BeginRequestAs(ICustomerContext customerContext) =>
+        new AgentConversationService(
+            _agentFactory.Create(Stack.Toolset.Tools),
+            _sessionStore,
+            customerContext,
+            Options.Create(_agentOptions),
+            NullLogger<AgentConversationService>.Instance);
 
     public void Dispose() => _cache.Dispose();
 }

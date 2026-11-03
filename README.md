@@ -25,7 +25,7 @@ Companion article: [Building Production AI Agents with Microsoft Agent Framework
 - Multi-step runs: check eligibility, then act on the result
 - Business rules the agent cannot bypass, because the service re-evaluates them
 - Authorization enforced by the application, never by the model
-- Conversation memory across separate HTTP requests
+- Conversation memory across separate HTTP requests, scoped to the signed-in customer
 - A swappable model provider behind `IChatClient`
 - Agent behaviour tested without a live model
 
@@ -147,7 +147,8 @@ dotnet user-secrets set "Agent:OpenAI:ApiKey" "<your key>"
 ORD-1006 is the interesting one: still `Processing`, so a status-only rule would allow
 cancelling it, yet the merchant flag says no. The rule is two-part.
 
-The signed-in customer defaults to **CUST-001**. Data is in-memory and resets on restart.
+In Development the signed-in customer defaults to **CUST-001**; outside Development an
+unauthenticated request is refused with 401. Data is in-memory and resets on restart.
 
 ---
 
@@ -202,7 +203,7 @@ order exists.
 dotnet test
 ```
 
-**68 tests, none of which call a live model.** `ScriptedChatClient` replays a fixed script in
+**73 tests, none of which call a live model.** `ScriptedChatClient` replays a fixed script in
 place of `IChatClient`, which keeps tool schemas, tool execution, business rules, session
 persistence and the API response shape under test.
 
@@ -217,9 +218,11 @@ is untouched.
 
 This is a POC. Production-oriented is not production-ready.
 
-- **No real authentication.** Identity is resolved from the request but falls back to a
-  configured value. Everything downstream already enforces authorization against it, so
-  this is the only place that changes.
+- **No real authentication.** There is no authentication middleware. Identity comes from a
+  `customer_id` claim if one is present; in Development it falls back to a configured
+  customer, and everywhere else the request is refused with 401 rather than defaulted.
+  Adding a real provider means wiring authentication in `Program.cs` and issuing that
+  claim — the authorization checks downstream already run against it.
 - **Data and sessions are in-process.** Both reset on restart and neither survives a second
   instance. Both sit behind interfaces, so a database and Redis are DI changes.
 - **No cost controls** beyond a message-length cap and a run timeout. No rate limiting, no

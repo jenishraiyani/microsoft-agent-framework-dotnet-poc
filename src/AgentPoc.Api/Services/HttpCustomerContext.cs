@@ -1,13 +1,15 @@
 using System.Security.Claims;
 using AgentPoc.Api.Configuration;
+using AgentPoc.Application.Exceptions;
 using AgentPoc.Application.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace AgentPoc.Api.Services;
 
 /// <summary>
-/// Resolves the authenticated customer from the request: a claim first, then a
-/// Development-only header for demos, then the configured fallback.
+/// Resolves the authenticated customer from the request claim. The header override and the
+/// configured fallback stand in for the identity provider this POC does not have, and are
+/// confined to Development; anywhere else an unauthenticated request is refused.
 /// </summary>
 public sealed class HttpCustomerContext : ICustomerContext
 {
@@ -42,10 +44,16 @@ public sealed class HttpCustomerContext : ICustomerContext
         var claim = httpContext?.User?.FindFirstValue(CustomerIdClaimType);
         if (!string.IsNullOrWhiteSpace(claim))
         {
-            return claim;
+            return claim.Trim();
         }
 
-        if (environment.IsDevelopment() && options.AllowHeaderOverrideInDevelopment)
+        if (!environment.IsDevelopment())
+        {
+            logger.LogWarning("Refusing a request that carries no authenticated customer.");
+            throw new UnauthenticatedCustomerException();
+        }
+
+        if (options.AllowHeaderOverrideInDevelopment)
         {
             var header = httpContext?.Request.Headers[CustomerIdHeaderName].ToString();
             if (!string.IsNullOrWhiteSpace(header))
@@ -57,9 +65,14 @@ public sealed class HttpCustomerContext : ICustomerContext
             }
         }
 
+        if (string.IsNullOrWhiteSpace(options.DevelopmentCustomerId))
+        {
+            throw new UnauthenticatedCustomerException();
+        }
+
         logger.LogWarning(
             "No authenticated customer on the request; falling back to the configured development customer.");
 
-        return options.DevelopmentCustomerId;
+        return options.DevelopmentCustomerId.Trim();
     }
 }

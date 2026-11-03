@@ -22,11 +22,13 @@ public sealed class AgentController : ControllerBase
     /// <summary>Sends one message to the support agent.</summary>
     /// <response code="200">The agent answered.</response>
     /// <response code="400">The message or conversation id was not acceptable.</response>
+    /// <response code="401">The request carried no authenticated customer.</response>
     /// <response code="502">The language model could not be reached.</response>
     /// <response code="504">The agent exceeded its time budget.</response>
     [HttpPost("chat")]
     [ProducesResponseType<AgentChatResult>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status502BadGateway)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status504GatewayTimeout)]
     public async Task<ActionResult<AgentChatResult>> ChatAsync(
