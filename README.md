@@ -40,7 +40,9 @@ Companion article: [Building Production AI Agents with Microsoft Agent Framework
 
 ## Packages
 
-Versions are pinned in [`Directory.Packages.props`](Directory.Packages.props).
+Versions are pinned in [`Directory.Packages.props`](Directory.Packages.props) and are the
+ones this POC was built and tested against, as of November 2026. Agent Framework ships
+roughly weekly, so check NuGet for current versions before starting from these.
 
 | Package | Version | Why |
 |---|---|---|
