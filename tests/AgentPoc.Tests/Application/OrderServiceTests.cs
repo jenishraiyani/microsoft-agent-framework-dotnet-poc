@@ -252,4 +252,18 @@ public sealed class OrderServiceTests
         var createdDates = result.Orders.Select(o => o.CreatedAt).ToList();
         Assert.Equal(createdDates.OrderByDescending(d => d), createdDates);
     }
+
+    [Fact]
+    public async Task Concurrent_cancellations_of_one_order_cancel_it_once()
+    {
+        var stack = new TestOrderStack();
+
+        var outcomes = await Task.WhenAll(Enumerable
+            .Range(0, 8)
+            .Select(_ => stack.Service.CancelOrderAsync("ORD-1001", CancellationToken.None)));
+
+        // Every caller reads the order before any of them writes, so the rule alone cannot
+        // settle this -- the write has to.
+        Assert.Single(outcomes, o => o.Cancelled);
+    }
 }

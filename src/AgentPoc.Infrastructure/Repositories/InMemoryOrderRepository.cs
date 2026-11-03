@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using AgentPoc.Application.Interfaces;
 using AgentPoc.Domain.Entities;
+using AgentPoc.Domain.Enums;
 using AgentPoc.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 
@@ -15,8 +16,8 @@ public sealed class InMemoryOrderRepository : IOrderRepository
     private readonly ConcurrentDictionary<string, Order> _orders;
     private readonly ILogger<InMemoryOrderRepository> _logger;
 
-    // Serialises read-modify-write. A real database would use a transaction or a
-    // concurrency token instead.
+    // Serialises the compare-and-write below. A real database would use a transaction or
+    // a concurrency token instead.
     private readonly SemaphoreSlim _writeLock = new(1, 1);
 
     public InMemoryOrderRepository(TimeProvider timeProvider, ILogger<InMemoryOrderRepository> logger)
@@ -67,15 +68,24 @@ public sealed class InMemoryOrderRepository : IOrderRepository
         return Task.FromResult(_orders.ContainsKey(orderId));
     }
 
-    public async Task<bool> UpdateAsync(Order order, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(
+        Order order,
+        OrderStatus expectedStatus,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(order);
 
         await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (!_orders.ContainsKey(order.Id))
+            // The caller evaluated its rule against a copy, outside this lock. That decision
+            // only still holds if nothing has moved the order on in the meantime.
+            if (!_orders.TryGetValue(order.Id, out var current) || current.Status != expectedStatus)
             {
+                _logger.LogWarning(
+                    "Rejected update for order {OrderId}: expected status {ExpectedStatus}.",
+                    order.Id,
+                    expectedStatus);
                 return false;
             }
 
