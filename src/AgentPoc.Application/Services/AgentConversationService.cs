@@ -3,6 +3,7 @@ using AgentPoc.Application.Agents;
 using AgentPoc.Application.DTOs;
 using AgentPoc.Application.Exceptions;
 using AgentPoc.Application.Interfaces;
+using AgentPoc.Application.Tools;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -127,9 +128,23 @@ public sealed class AgentConversationService : IAgentConversationService
             .Select(call => new AgentToolCall(
                 call.Name,
                 results.TryGetValue(call.CallId, out var result)
-                    ? result.Exception is null ? "Success" : "Failed"
+                    ? DescribeOutcome(result)
                     : "NoResult"))
             .ToList();
+    }
+
+    /// <summary>
+    /// A tool that refuses returns a result rather than throwing, so the reported status has
+    /// to come from the result itself -- otherwise a refused cancellation appears as a success.
+    /// </summary>
+    private static string DescribeOutcome(FunctionResultContent result)
+    {
+        if (result.Exception is not null)
+        {
+            return "Failed";
+        }
+
+        return ToolOutcome.IsRefusal(result.Result) ? "Refused" : "Success";
     }
 
     /// <summary>
