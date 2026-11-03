@@ -26,17 +26,20 @@ public sealed class AgentConversationService : IAgentConversationService
 {
     private readonly AIAgent _agent;
     private readonly IAgentSessionStore _sessionStore;
+    private readonly ICustomerContext _customerContext;
     private readonly AgentOptions _options;
     private readonly ILogger<AgentConversationService> _logger;
 
     public AgentConversationService(
         AIAgent agent,
         IAgentSessionStore sessionStore,
+        ICustomerContext customerContext,
         IOptions<AgentOptions> options,
         ILogger<AgentConversationService> logger)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _sessionStore = sessionStore ?? throw new ArgumentNullException(nameof(sessionStore));
+        _customerContext = customerContext ?? throw new ArgumentNullException(nameof(customerContext));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -46,11 +49,18 @@ public sealed class AgentConversationService : IAgentConversationService
         string? conversationId,
         CancellationToken cancellationToken = default)
     {
+        // Read first: an unauthenticated request is refused before the model is involved.
+        var customerId = _customerContext.CustomerId;
+
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
         var id = NormalizeConversationId(conversationId);
 
-        using var logScope = _logger.BeginScope(new Dictionary<string, object> { ["ConversationId"] = id });
+        using var logScope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["CustomerId"] = customerId,
+            ["ConversationId"] = id
+        });
 
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutSource.CancelAfter(_options.RunTimeout);
@@ -63,7 +73,7 @@ public sealed class AgentConversationService : IAgentConversationService
         try
         {
             session = await _sessionStore
-                .GetOrCreateAsync(_agent, id, timeoutSource.Token)
+                .GetOrCreateAsync(_agent, customerId, id, timeoutSource.Token)
                 .ConfigureAwait(false);
 
             response = await _agent
@@ -80,7 +90,7 @@ public sealed class AgentConversationService : IAgentConversationService
         // The turn already succeeded, so the updated history is saved even if the caller
         // has since disconnected.
         await _sessionStore
-            .SaveAsync(_agent, id, session, CancellationToken.None)
+            .SaveAsync(_agent, customerId, id, session, CancellationToken.None)
             .ConfigureAwait(false);
 
         var toolCalls = ExtractToolCalls(response);

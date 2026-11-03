@@ -79,6 +79,28 @@ public sealed class AgentConversationTests
     }
 
     [Fact]
+    public async Task A_conversation_id_alone_does_not_resume_another_customers_session()
+    {
+        using var host = new TestAgentHost(new ScriptedChatClient(
+            ScriptedChatClient.Says("ORD-1001 is currently processing."),
+            ScriptedChatClient.Says("Which order do you mean?")));
+
+        var first = await host.BeginRequest().SendAsync("My order ORD-1001", null, CancellationToken.None);
+
+        // The id is returned to the caller and appears in logs, so holding one must not be
+        // enough to read the conversation it belongs to.
+        await host.BeginRequestAs("CUST-002")
+            .SendAsync("Can I cancel it?", first.ConversationId, CancellationToken.None);
+
+        var secondRequest = host.ChatClient.Requests[^1];
+
+        Assert.Single(secondRequest);
+        Assert.DoesNotContain(
+            secondRequest.SelectMany(m => m.Contents.OfType<Microsoft.Extensions.AI.TextContent>()),
+            c => c.Text.Contains("ORD-1001", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task A_permitted_cancellation_is_actually_persisted()
     {
         using var host = new TestAgentHost(new ScriptedChatClient(

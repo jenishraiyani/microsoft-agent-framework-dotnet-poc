@@ -66,6 +66,11 @@ public sealed class AgentExceptionHandler : IExceptionHandler
 
     private static (int Status, string Title, string Detail) Map(Exception exception) => exception switch
     {
+        UnauthenticatedCustomerException =>
+            (StatusCodes.Status401Unauthorized,
+             "Not authenticated",
+             "This request carries no authenticated customer."),
+
         InvalidConversationIdException ex =>
             (StatusCodes.Status400BadRequest, "Invalid conversation id", ex.Message),
 

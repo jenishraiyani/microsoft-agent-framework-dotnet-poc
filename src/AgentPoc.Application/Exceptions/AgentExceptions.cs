@@ -23,3 +23,16 @@ public sealed class InvalidConversationIdException : Exception
     {
     }
 }
+
+/// <summary>
+/// The request carried no authenticated customer. Thrown rather than defaulted, so a
+/// deployment without an identity provider refuses requests instead of serving one
+/// customer's orders to anyone who asks.
+/// </summary>
+public sealed class UnauthenticatedCustomerException : Exception
+{
+    public UnauthenticatedCustomerException()
+        : base("The request carries no authenticated customer.")
+    {
+    }
+}

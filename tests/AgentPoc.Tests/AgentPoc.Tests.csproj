@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AgentPoc.Api\AgentPoc.Api.csproj" />
     <ProjectReference Include="..\..\src\AgentPoc.Application\AgentPoc.Application.csproj" />
     <ProjectReference Include="..\..\src\AgentPoc.Domain\AgentPoc.Domain.csproj" />
     <ProjectReference Include="..\..\src\AgentPoc.Infrastructure\AgentPoc.Infrastructure.csproj" />
