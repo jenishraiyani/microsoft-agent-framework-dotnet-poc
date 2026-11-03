@@ -203,7 +203,7 @@ order exists.
 dotnet test
 ```
 
-**77 tests, none of which call a live model.** `ScriptedChatClient` replays a fixed script in
+**86 tests, none of which call a live model.** `ScriptedChatClient` replays a fixed script in
 place of `IChatClient`, which keeps tool schemas, tool execution, business rules, session
 persistence and the API response shape under test.
 

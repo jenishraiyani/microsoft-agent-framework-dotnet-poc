@@ -138,6 +138,22 @@ public sealed class AgentConversationTests
     }
 
     [Fact]
+    public async Task A_refused_tool_call_is_not_reported_as_a_success()
+    {
+        // The script goes straight for a cancellation the rule will refuse.
+        using var host = new TestAgentHost(new ScriptedChatClient(
+            ScriptedChatClient.Calls("CancelOrder", "call-1", ("orderId", "ORD-1002")),
+            ScriptedChatClient.Says("I am sorry, that order can no longer be cancelled.")));
+
+        var result = await host.BeginRequest()
+            .SendAsync("Cancel ORD-1002.", null, CancellationToken.None);
+
+        var toolCall = Assert.Single(result.ToolCalls);
+        Assert.Equal("CancelOrder", toolCall.Tool);
+        Assert.Equal("Refused", toolCall.Status);
+    }
+
+    [Fact]
     public async Task Another_customers_order_is_invisible_even_when_the_model_asks_for_it_by_id()
     {
         using var host = new TestAgentHost(

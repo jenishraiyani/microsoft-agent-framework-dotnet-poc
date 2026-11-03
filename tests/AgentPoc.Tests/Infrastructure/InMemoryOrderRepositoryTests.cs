@@ -48,8 +48,24 @@ public sealed class InMemoryOrderRepositoryTests
             cancellationAllowed: true,
             refundStatus: RefundStatus.NotApplicable);
 
-        Assert.False(await repository.UpdateAsync(ghost, CancellationToken.None));
+        Assert.False(await repository.UpdateAsync(ghost, OrderStatus.Pending, CancellationToken.None));
         Assert.False(await repository.ExistsAsync("ORD-7777", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task A_write_is_rejected_once_the_stored_status_has_moved_on()
+    {
+        var repository = CreateRepository();
+
+        var first = await repository.GetByIdAsync("ORD-1001", CancellationToken.None);
+        var second = await repository.GetByIdAsync("ORD-1001", CancellationToken.None);
+
+        // Both readers checked the rule while the order was Processing.
+        first!.Cancel();
+        second!.Cancel();
+
+        Assert.True(await repository.UpdateAsync(first, OrderStatus.Processing, CancellationToken.None));
+        Assert.False(await repository.UpdateAsync(second, OrderStatus.Processing, CancellationToken.None));
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using AgentPoc.Application.Tools;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -35,11 +36,19 @@ public sealed class ToolInvocationLogger
         try
         {
             var result = await next(context, cancellationToken).ConfigureAwait(false);
+            var elapsedMs = Stopwatch.GetElapsedTime(timestamp).TotalMilliseconds;
 
-            _logger.LogInformation(
-                "Tool {ToolName} succeeded in {ElapsedMs} ms.",
-                toolName,
-                Stopwatch.GetElapsedTime(timestamp).TotalMilliseconds);
+            // A business refusal comes back as a result, not an exception, so the log has to
+            // read it. Otherwise every refused cancellation is recorded as a success.
+            if (ToolOutcome.IsRefusal(result))
+            {
+                _logger.LogInformation(
+                    "Tool {ToolName} refused the request in {ElapsedMs} ms.", toolName, elapsedMs);
+            }
+            else
+            {
+                _logger.LogInformation("Tool {ToolName} succeeded in {ElapsedMs} ms.", toolName, elapsedMs);
+            }
 
             return result;
         }

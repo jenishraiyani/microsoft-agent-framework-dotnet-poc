@@ -75,19 +75,27 @@ public sealed partial class OrderService : IOrderService
                 reason);
         }
 
+        // The rule was evaluated against this status, so the write only applies if the
+        // stored order is still in it.
+        var statusWhenEvaluated = order.Status;
+
         order.Cancel();
 
-        var persisted = await _repository.UpdateAsync(order, cancellationToken).ConfigureAwait(false);
+        var persisted = await _repository
+            .UpdateAsync(order, statusWhenEvaluated, cancellationToken)
+            .ConfigureAwait(false);
+
         if (!persisted)
         {
             _logger.LogWarning("Cancellation of order {OrderId} could not be persisted.", order.Id);
 
             return new CancellationOutcome(
                 order.Id,
-                CancellationOutcomeCode.OrderNotFound,
+                CancellationOutcomeCode.NotEligible,
                 Status: "Unknown",
                 RefundStatus: "Unknown",
-                Message: "The order could not be updated because it is no longer available.");
+                Message: "The order changed while it was being cancelled, so nothing was applied. "
+                    + "Please check its status and try again.");
         }
 
         _logger.LogInformation(

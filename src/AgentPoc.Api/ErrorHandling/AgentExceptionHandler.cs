@@ -78,6 +78,20 @@ public sealed class AgentExceptionHandler : IExceptionHandler
         AgentTimeoutException ex =>
             (StatusCodes.Status504GatewayTimeout, "The assistant took too long to respond", ex.Message),
 
+        // A rate limit is temporary and the caller should wait, so it must not look like
+        // an outage that invites an immediate retry.
+        ClientResultException { Status: 429 } or RequestFailedException { Status: 429 } =>
+            (StatusCodes.Status503ServiceUnavailable,
+             "The assistant is busy",
+             "Too many requests to the model. Please retry shortly."),
+
+        // The model rejected the message itself -- a content filter or a context-length
+        // limit. Retrying the same message will fail the same way.
+        ClientResultException { Status: 400 } or RequestFailedException { Status: 400 } =>
+            (StatusCodes.Status422UnprocessableEntity,
+             "The request could not be processed",
+             "The model rejected this message."),
+
         // Transport, service and token-acquisition failures all mean the same thing to the
         // caller: the model could not be reached.
         ClientResultException or RequestFailedException or AuthenticationFailedException =>

@@ -1,4 +1,5 @@
 using System.ClientModel;
+using Azure;
 using AgentPoc.Api.ErrorHandling;
 using AgentPoc.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
@@ -57,6 +58,24 @@ public sealed class AgentExceptionHandlerTests
 
         Assert.Equal(StatusCodes.Status502BadGateway, problem.Status);
         Assert.DoesNotContain("contoso", problem.Detail, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task A_rate_limit_is_not_reported_as_an_outage()
+    {
+        // 502 invites an immediate retry, which is the worst response to a rate limit.
+        var problem = await HandleAsync(new RequestFailedException(429, "rate limit exceeded"));
+
+        Assert.Equal(StatusCodes.Status503ServiceUnavailable, problem.Status);
+    }
+
+    [Fact]
+    public async Task A_message_the_model_rejects_is_not_reported_as_retryable()
+    {
+        var problem = await HandleAsync(new RequestFailedException(400, "content filter triggered"));
+
+        Assert.Equal(StatusCodes.Status422UnprocessableEntity, problem.Status);
+        Assert.DoesNotContain("try again", problem.Detail!, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
