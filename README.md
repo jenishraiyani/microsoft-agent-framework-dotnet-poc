@@ -227,6 +227,9 @@ This is a POC. Production-oriented is not production-ready.
   instance. Both sit behind interfaces, so a database and Redis are DI changes.
 - **No cost controls** beyond a message-length cap and a run timeout. No rate limiting, no
   token budget, no ceiling on tool calls per run.
+- **No tracing or token metrics.** Logging is structured, scoped and timed, but a turn
+  cannot be followed as a single trace and nothing records what it consumed. OpenTelemetry
+  spans and per-turn token usage are the next step for visibility and cost.
 - **Destructive operations are protected by business rules alone.** The framework's
   tool-approval mechanism is the next step where rules are not enough.
 - **Non-streaming only.** `RunStreamingAsync` exists if you want token-by-token output.
