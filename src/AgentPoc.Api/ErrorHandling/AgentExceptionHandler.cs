@@ -8,8 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace AgentPoc.Api.ErrorHandling;
 
 /// <summary>
-/// Maps unhandled exceptions to RFC 9457 problem responses. Exception text is logged, never
-/// serialised: provider exceptions carry endpoints, deployment names and request ids.
+/// Maps unhandled exceptions to RFC 9457 problem responses. Only messages this application
+/// wrote are returned to the caller; framework and provider exception text is logged and
+/// never serialised, because it carries endpoints, deployment names and request ids.
 /// </summary>
 public sealed class AgentExceptionHandler : IExceptionHandler
 {
@@ -74,9 +75,6 @@ public sealed class AgentExceptionHandler : IExceptionHandler
         InvalidConversationIdException ex =>
             (StatusCodes.Status400BadRequest, "Invalid conversation id", ex.Message),
 
-        ArgumentException ex =>
-            (StatusCodes.Status400BadRequest, "Invalid request", ex.Message),
-
         AgentTimeoutException ex =>
             (StatusCodes.Status504GatewayTimeout, "The assistant took too long to respond", ex.Message),
 
@@ -87,6 +85,9 @@ public sealed class AgentExceptionHandler : IExceptionHandler
              "The assistant is temporarily unavailable",
              "The language model could not be reached. Please try again shortly."),
 
+        // Everything else is a server fault, including ArgumentException: an empty or
+        // oversized message is rejected by the model binder long before this point, so a
+        // validation failure arriving here is a bug in this application, not a bad request.
         _ => (StatusCodes.Status500InternalServerError,
               "Unexpected error",
               "The request could not be completed. Please try again.")
